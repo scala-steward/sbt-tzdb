@@ -11,7 +11,7 @@ import org.threeten.bp.DateTimeException
 import org.portablescala.reflect.annotation.EnableReflectiveInstantiation
 
 @EnableReflectiveInstantiation
-final class TzdbZoneRulesProvider extends ZoneRulesProvider:
+final class TzdbZoneRulesProvider extends ZoneRulesProvider {
   import zonedb.threeten.tzdb.*
 
   private def toLocalTime(secondOfDay: Int): LocalTime =
@@ -19,10 +19,10 @@ final class TzdbZoneRulesProvider extends ZoneRulesProvider:
 
   // Decodes a flat Int array of (year, dayOfYear, secondOfDay, offsetBefore, offsetAfter)
   // quintuples, the encoding produced by kuyfi's TZDBCodeGenerator.
-  private def decodeTransitions(data: Array[Int]): java.util.List[ZoneOffsetTransition] =
+  private def decodeTransitions(data: Array[Int]): java.util.List[ZoneOffsetTransition] = {
     val out = new java.util.ArrayList[ZoneOffsetTransition](data.length / 5)
     var i   = 0
-    while i < data.length do
+    while (i < data.length) {
       val transition =
         LocalDateTime.of(LocalDate.ofYearDay(data(i), data(i + 1)), toLocalTime(data(i + 2)))
       out.add(
@@ -32,14 +32,16 @@ final class TzdbZoneRulesProvider extends ZoneRulesProvider:
         )
       )
       i += 5
+    }
     out
+  }
 
   // Decodes a flat Int array of 9-int-wide transition rule tuples.
-  private def decodeRules(data: Array[Int]): java.util.List[ZoneOffsetTransitionRule] =
+  private def decodeRules(data: Array[Int]): java.util.List[ZoneOffsetTransitionRule] = {
     val out = new java.util.ArrayList[ZoneOffsetTransitionRule](data.length / 9)
     var i   = 0
-    while i < data.length do
-      val dayOfWeek = if data(i + 2) >= 0 then DayOfWeek.of(data(i + 2)) else null
+    while (i < data.length) {
+      val dayOfWeek = if (data(i + 2) >= 0) DayOfWeek.of(data(i + 2)) else null
       out.add(
         ZoneOffsetTransitionRule.of(
           Month.of(data(i)),
@@ -54,9 +56,11 @@ final class TzdbZoneRulesProvider extends ZoneRulesProvider:
         )
       )
       i += 9
+    }
     out
+  }
 
-  private def toZoneRules(czr: (Int, Int, Array[Int], Array[Int], Array[Int])): ZoneRules =
+  private def toZoneRules(czr: (Int, Int, Array[Int], Array[Int], Array[Int])): ZoneRules = {
     val (bso, bwo, standardTransitions, transitionList, lastRules) = czr
     ZoneRules.of(
       ZoneOffset.ofTotalSeconds(bso),
@@ -65,8 +69,9 @@ final class TzdbZoneRulesProvider extends ZoneRulesProvider:
       decodeTransitions(transitionList),
       decodeRules(lastRules)
     )
+  }
 
-  override protected def provideZoneIds: java.util.Set[String] =
+  override protected def provideZoneIds: java.util.Set[String] = {
     val zones = new java.util.HashSet[String]()
     val zonesSet = (stdZones.keySet ++ fixedZones.keySet ++ zoneLinks.keySet)
     zonesSet.foreach(zones.add(_))
@@ -77,9 +82,10 @@ final class TzdbZoneRulesProvider extends ZoneRulesProvider:
     zones.remove("GMT+0")
     zones.remove("GMT-0")
     zones
+  }
 
   override protected def provideRules(regionId: String,
-                                      forCaching: Boolean): ZoneRules =
+                                      forCaching: Boolean): ZoneRules = {
     val actualRegion = zoneLinks.getOrElse(regionId, regionId)
     stdZones
       .get(actualRegion)
@@ -90,9 +96,10 @@ final class TzdbZoneRulesProvider extends ZoneRulesProvider:
           .map(i => ZoneRules.of(ZoneOffset.ofTotalSeconds(i))))
       .getOrElse(
         throw new DateTimeException(s"TimeZone Region $actualRegion unknown"))
+  }
 
   override protected def provideVersions(
-      zoneId: String): java.util.NavigableMap[String, ZoneRules] =
+      zoneId: String): java.util.NavigableMap[String, ZoneRules] = {
     val actualRegion = zoneLinks.getOrElse(zoneId, zoneId)
     stdZones
       .get(actualRegion)
@@ -108,3 +115,5 @@ final class TzdbZoneRulesProvider extends ZoneRulesProvider:
       }
       .getOrElse(
         throw new DateTimeException(s"TimeZone Region $actualRegion unknown"))
+  }
+}
