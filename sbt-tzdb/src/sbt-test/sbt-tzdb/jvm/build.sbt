@@ -11,6 +11,12 @@ tzdbPlatform := TzdbPlugin.Platform.Jvm
 
 dbVersion := TzdbPlugin.Version("2019c")
 
+// The generated provider must parse in a codebase that has turned significant
+// indentation OFF. Brace syntax is valid either way, indentation-based syntax is not,
+// so compiling the Scala 3 output under -no-indent is what keeps the scala-3 resource
+// usable by both kinds of build.
+scalacOptions ++= (if (scalaBinaryVersion.value == "3") Seq("-no-indent") else Seq.empty)
+
 // doesn't work to do this `inThisBuild`
 lazy val commonSettings = Seq(
   Compile / doc / scalacOptions --= Seq(
